@@ -112,7 +112,14 @@ class TestMemcachedCache(Base):
 class TestRedisCache(Base):
     def setUp(self):
         super(TestRedisCache, self).setUp()
-        environ['CACHE_URL'] = 'redis://127.0.0.1:6379/0/prefix'
+
+        self.host = '127.0.0.1'
+        self.port = '6379'
+        self.db = '0'
+        self.prefix = 'prefix'
+
+        environ['CACHE_URL'] = 'redis://%s:%s/%s/%s' % (self.host, self.port,
+                self.db, self.prefix)
 
     def test_redis_url_returns_redis_cache(self):
         location = 'redis_cache.cache.RedisCache'
@@ -126,6 +133,15 @@ class TestRedisCache(Base):
     def test_redis_url_returns_prefix_from_url(self):
         config = django_cache_url.config()
         assert_equals(config['KEY_PREFIX'], 'prefix')
+
+    def test_redis_url_without_db(self):
+        # location url with no db without and with a trailing slash
+        config = django_cache_url.parse('redis://%s:%s' % (self.host, self.port))
+        assert_equals(config['LOCATION'], '%s:%s:%s' % (self.host, self.port,
+                self.db))
+        config = django_cache_url.parse('redis://%s:%s/' % (self.host, self.port))
+        assert_equals(config['LOCATION'], '%s:%s:%s' % (self.host, self.port,
+                self.db))
 
 
 class TestHiredisCache(Base):

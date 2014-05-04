@@ -51,8 +51,10 @@ def parse(url):
     config = {}
 
     url = urlparse.urlparse(url)
+
     # Update with environment configuration.
     config['BACKEND'] = CACHE_TYPES[url.scheme]
+
     if url.scheme == 'file':
         config['LOCATION'] = url.path
         return config
@@ -102,9 +104,11 @@ def parse(url):
             except ValueError:
                 pass
 
-            path = list(filter(None, url.path.split('/')))
-            config['LOCATION'] = ':'.join((hostport, path[0]))
-            config['KEY_PREFIX'] = '/'.join(path[1:])
+            params = dict(zip(('db', 'prefix'), url.path[1:].split('/', 1)))
+            # If database number not specified assume number 0
+            db = params.get('db', '0') or '0'
+            config['LOCATION'] = hostport + ':' + db
+            config['KEY_PREFIX'] = params.get('prefix', '')
 
         redis_options = {}
 
